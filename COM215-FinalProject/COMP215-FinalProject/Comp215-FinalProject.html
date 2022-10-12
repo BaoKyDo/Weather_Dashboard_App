@@ -1,0 +1,329 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Weather Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <style>
+        .border {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <main id="mainPage">
+        <form>
+            <div class="container-fluid">
+                <div class="row border">
+                    <div class="col">
+                        <h1>Weather Dashboard:</h1>
+                        <h2>Date:  <input type="text" id="currentDate" placeholder="(Show Current date here)" /></h2>
+                        <input name="tempUnit" type="radio" id="celsius" value="celsius" checked /> Celsius
+                        <input name="tempUnit" type="radio" id="fahrenheit" value="fahrenheit" /> Fahrenheit
+                    </div>
+                </div>
+
+                <div class="row">
+
+                    <div class="col-12 col-md-6 border" id="city1">
+                        <label>City:  </label><input type="text" id="city1Name" name="city1" value="Regina" placeholder="Enter a City Name" /><br />
+                        <p class="countryCurrentWeather"></p>
+                        <p><b>Current Weather:</b></p><br />
+                        <p class="cityCurrentWeatherDisplay"></p><br />
+                        <p><b>Hourly Weather:</b></p><br />
+                        <p class="HourlyWeatherDisplay"></p>
+                    </div>
+
+                    <div class="col-12 col-md-6 border" id="city2">
+                        <label>City:  </label><input type="text" id="city2Name" name="city2" value="" placeholder="Enter a City Name" /><br />
+                        <p class="countryCurrentWeather"></p>
+                        <p><b>Current Weather:</b></p><br />
+                        <p class="cityCurrentWeatherDisplay"></p><br />
+                        <p><b>Hourly Weather:</b></p><br />
+                        <p class="HourlyWeatherDisplay"></p>
+                    </div>
+
+                </div>
+
+            </div>
+        </form>
+    </main>
+
+    <script>
+
+        //get Current Date from the program
+        var today = new Date();
+        var day = today.getDate();
+        var month = today.getMonth() + 1;
+        var year = today.getFullYear();
+
+        today = month + '/' + day + '/' + year;
+
+        //display it in the text box
+        document.getElementById("currentDate").value = today;
+
+
+        function SearchWeather(CityName, OutputBox) {
+
+            //create an instance of XMLHttpRequest()
+            var xhttp1 = new XMLHttpRequest();
+
+            //put it on ready
+            xhttp1.onreadystatechange = function () {
+
+                //if the page is met
+                if (this.readyState == 4 && this.status == 200) {
+
+                    //get the response of the page
+                    var SearchResponse = this.responseText;
+
+                    //convert it
+                    var obj = JSON.parse(SearchResponse);
+
+                    if (obj != null) {
+
+                        //if cityname is valid
+                        //call name of the API elements
+
+                        var lat = obj.coord.lat;
+                        var lon = obj.coord.lon;
+                        var country = obj.sys.country;
+                        var CurrentTime = new Date(obj.dt * 1000);
+                        var SunriseTime = new Date(obj.sys.sunrise * 1000);
+                        var SunsetTime = new Date(obj.sys.sunset * 1000);
+                        var Temp = obj.main.temp;
+                        var Pressure = obj.main.pressure;
+                        var WindSpeed = obj.wind.speed;
+                        var WindDirection = obj.wind.deg;
+                        var Description = obj.weather[0].description;
+                        var Icon = obj.weather[0].icon;
+
+                        //check for temperature unit --> and convert them into the suitable unit
+                        if (document.getElementById("celsius").checked) {
+                            Temp -= 273.15;
+                        }
+                        else if (document.getElementById("fahrenheit").checked) {
+                            Temp = 9 / 5 * (Temp - 273.15) + 32;
+                        }
+
+
+                        //get needed element from the currentWeather in APImapweather
+                        var currentWeatherResult =
+                            "Current Time: " + CurrentTime + "<br/>" +
+                            "Sunrise Time: " + SunriseTime + "<br/>" +
+                            "Sunset Time: " + SunsetTime + "<br/>" +
+                            "Temperature: " + Temp.toFixed(0) + " <br/>" +
+                            "Pressure: " + Pressure + "<br/>" +
+                            "Wind Speed: " + WindSpeed + "<br/>" +
+                            "Wind Direction: " + WindDirection + "<br/>" +
+                            "Description: " + Description + " <br/>" +
+                            "<img src = \"https://openweathermap.org/img/wn/" + Icon + "@2x.png\" /><br/>";
+
+                        //display them out
+                        $(OutputBox).find(".cityCurrentWeatherDisplay").html(currentWeatherResult);
+                        $(OutputBox).find(".countryCurrentWeather").html("Country Code: " + country);
+
+                        //create the second request
+                        var xhttp2 = new XMLHttpRequest();
+
+                        //let it on execute
+                        xhttp2.onreadystatechange = function () {
+
+                            //if the request is good
+                            if (this.readyState == 4 && this.status == 200) {
+
+                                //get the response text
+                                var SearchResponse = this.responseText;
+
+                                //convert it
+                                var obj2 = JSON.parse(SearchResponse);
+
+                                if (obj2 != null) {
+                                    //create a new variable to store obj.hourly
+                                    var hourly = obj2.hourly;
+                                    var HourlyWeatherResult = "";
+
+                                    //get the the next 3 hours forecast
+                                    for (var i = 1; i < 4; i++) {
+
+                                        var temp2 = hourly[i].temp;
+
+                                        //check for temperature unit
+                                        if (document.getElementById("celsius").checked) {
+                                            temp2 -= 273.15;
+                                        }
+                                        else if (document.getElementById("fahrenheit").checked) {
+                                            temp2 = 9 / 5 * (temp2 - 273.15) + 32;
+                                        }
+
+                                        //call neccessary element from focastWeather
+                                        HourlyWeatherResult += "Time: " + new Date(hourly[i].dt * 1000) + "<br/>" +
+                                            "Temperature: " + temp2.toFixed(0) + "<br/>" +
+                                            "Pressure: " + hourly[i].pressure + "<br/>" +
+                                            "Wind Speed: " + hourly[i].wind_speed + "<br/>" +
+                                            "Wind Direction: " + hourly[i].wind_deg + "<br/>" +
+                                            "Description: " + hourly[i].weather[0].description + "<br/>" +
+                                            "Probability of Precipitation: " + hourly[i].pop + "<br/>" +
+                                            "<img src = \"https://openweathermap.org/img/wn/" + hourly[i].weather[0].icon + "@2x.png\" /><br/>";
+                                    }
+
+                                    //display them
+                                    $(OutputBox).find(".HourlyWeatherDisplay").html(HourlyWeatherResult);
+                                }
+                                else {
+                                    $(OutputBox).find(".HourlyWeatherDisplay").html("Weather forecast unavailable - please retry");
+
+                                }
+                            }
+                        }
+
+                        var apiKey = "b0ddfaed24218f76cf4399c90c72e91d";
+
+                        var SearchString2 = "https://api.openweathermap.org/data/2.5/onecall?lat=" +
+                            lat + "&lon=" + lon + "&APPID=" + apiKey;
+
+                        // (4) open a connection (we use get here)
+                        xhttp2.open("GET", SearchString2, true); // true = means Async request
+                        // (5) send the request and wait for the response (triigers the callback)
+                        xhttp2.send();
+
+                    }
+                    
+                }
+                else if (this.readyState == 4 && this.status != 200){
+                    $(OutputBox).find(".cityCurrentWeatherDisplay").html("City name not found");
+                    $(OutputBox).find(".countryCurrentWeather").html("Country Code: undefine");
+                    $(OutputBox).find(".HourlyWeatherDisplay").html("");
+                }
+
+            }
+            var apiKey = "b0ddfaed24218f76cf4399c90c72e91d";
+
+            var SearchString = "https://api.openweathermap.org/data/2.5/weather" +
+                "?q=" + CityName +
+                "&APPID=" + apiKey;
+
+            // (4) open a connection (we use get here)
+            xhttp1.open("GET", SearchString, true);
+            // (5) send the request and wait for the response (triigers the callback)
+            xhttp1.send();
+        }
+
+
+        var City1NameTextBox = document.getElementById("city1Name");
+
+        //when leave the box 1 --> the page get updated
+        City1NameTextBox.onblur = function (event) {
+
+            var CityName = $("#city1Name").val();
+            var OutputBox = $("#city1");
+
+            //call SearchWeather Method
+            SearchWeather(CityName, OutputBox);
+
+            //save the city name and temperature Unit
+            saveCity();
+        };
+
+        var City2NameTextBox = document.getElementById("city2Name");
+        //when leave the box 2 --> the page get updated
+        City2NameTextBox.onblur = function (event) {
+
+            var CityName = $("#city2Name").val();
+            var OutputBox = $("#city2");
+
+            //call SearchWeather Method
+            SearchWeather(CityName, OutputBox);
+
+            //save the city name and temperature Unit
+            saveCity();
+        };
+
+
+
+
+        var mainElement = document.getElementById("mainPage");
+
+        //create a serialize form to store the array of city name and temperature unit
+        function serializeForm() {
+            var inputFields = $(mainElement).find('form .row :input')
+            var result = {};
+            var cityKey = JSON.parse(localStorage.cities);
+            $.each(inputFields, function (index, value) {
+                if ($(value).attr('name')) {
+                    if ($(value).attr('name') == "tempUnit") {
+                        if (document.getElementById("celsius").checked) {
+                            result[$(value).attr('name')] = "celsius";
+                        }
+                        else {
+                            result[$(value).attr('name')] = "fahrenheit";
+                        }
+                    }
+                    else {
+                        result[$(value).attr('name')] = $(value).val();
+                    }
+                }
+            });
+
+            //check for duplication
+            for (var i = 0; i < cityKey.length; i++) {
+
+                //if city 1 and city 2 is already exist in the local storage
+                if (cityKey[i].city1 == result['city1'] && cityKey[i].city2 == result['city2']) {
+                    //with the same temparature unit them --> ignore them
+                    if (cityKey[i].tempUnit == result['tempUnit']) {
+                        result = "";
+                    }
+                    //if not then --> update unit
+                    else if (cityKey[i].tempUnit != result['tempUnit']) {
+                        cityKey[i].tempUnit = result['tempUnit'];
+                        localStorage.setItem("cities", JSON.stringify(cityKey));
+                        result = "";
+                    }
+                }
+                //if user enter nothing --> ignore
+                if (result['city1'] == "" && result['city2'] == "") {
+                    result = "";
+                }
+            }
+
+            return result
+        }
+
+        function store(city) {
+            //get all items under 'cities' key in the local storage
+            var citiesStored = localStorage.getItem('cities');
+            var cities = [];
+
+            //if item is not null
+            if (citiesStored) {
+                //convert them
+                cities = JSON.parse(citiesStored);
+            }
+            //get the city and push them at the end of the array list in local storage
+            cities.push(city);
+            localStorage.setItem('cities', JSON.stringify(cities));
+        }
+
+        function saveCity() {
+            //call serializeForm method
+            var city = serializeForm();
+
+            //if city returns something then save
+            if (city != "") {
+                store(city);
+            }
+            //else --> ignore
+        }
+
+
+    </script>
+
+</body>
+</html>
